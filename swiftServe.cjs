@@ -1,10 +1,10 @@
-import http from "http";
-import http2 from "http2";
-import path from "path";
-import fs from "fs";
-import WebSocket from "ws";
+const http = require("http");
+const http2 = require("http2");
+const path = require("path");
+const fs = require("fs");
+const WebSocket = require("ws");
 
-export default function createSwiftServe() {
+function createSwiftServe() {
   const routes = {
     GET: [],
     POST: [],
@@ -223,3 +223,5 @@ export default function createSwiftServe() {
     cors,
   };
 }
+
+module.exports = createSwiftServe;

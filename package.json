@@ -1,20 +1,34 @@
 {
   "name": "swiftserve-pkg",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "version": "1.0.1",
+  "description": "A lightweight, flexible server framework supporting both ESM and CommonJS.",
+  "main": "swiftServe.cjs",
+  "module": "swiftServe.js",
+  "type": "module",
+  "exports": {
+    ".": "./swiftServe.js",
+    "./commonjs": "./swiftServe.cjs"
   },
-  "keywords": [],
-  "author": "",
+  "scripts": {
+    "test": "node index.test.js"
+  },
+  "keywords": [
+    "server",
+    "framework",
+    "http",
+    "websockets"
+  ],
+  "author": "TayiraCompany",
   "license": "ISC",
-  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TayiraCompany/SwiftServe"
+  },
   "devDependencies": {
     "@types/node": "^22.4.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "http": "^0.0.1-security",
     "ws": "^8.18.0"
   }
 }
