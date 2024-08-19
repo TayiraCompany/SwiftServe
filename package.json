@@ -1,16 +1,11 @@
 {
   "name": "swiftserve-pkg",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "A lightweight, flexible server framework supporting both ESM and CommonJS.",
-  "main": "swiftServe.cjs",
-  "module": "swiftServe.js",
-  "type": "module",
-  "exports": {
-    ".": "./swiftServe.js",
-    "./commonjs": "./swiftServe.cjs"
-  },
+  "main": "./dist/swiftServe.js",
   "scripts": {
-    "test": "node index.test.js"
+    "build": "tsc",
+    "start": "node dist/swiftServe.js"
   },
   "keywords": [
     "server",
@@ -29,6 +24,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "@types/ws": "^8.5.12",
     "ws": "^8.18.0"
   }
 }
