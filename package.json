@@ -1,6 +1,6 @@
 {
   "name": "swiftserve-pkg",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "SwiftServe is a fast, lightweight, and flexible server framework that seamlessly supports both ESM and CommonJS. Perfect for building modern web applications and APIs with advanced HTTP and WebSocket features.",
   "main": "./dist/swiftServe.js",
   "scripts": {

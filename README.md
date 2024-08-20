@@ -17,12 +17,8 @@ app.use(async (req, res, next) => {
   await next();
 });
 
-app.get("/hello/:p2", (req, res) => {
-  const { p = 0, s = 1 } = req.query; // Set default query values
-  const { p2 } = req.params; // Extract params from URL
-  res.send(
-    `Hello, World! , ${p} + ${s} = ${Number(p) + Number(s)} <br/> ${p2}`
-  );
+app.get("/", (req, res) => {
+  res.send(`Hello, World!`);
 });
 
 app.listen(3000, () => {
