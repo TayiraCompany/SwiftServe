@@ -1,17 +1,23 @@
 {
   "name": "swiftserve-pkg",
-  "version": "1.0.3",
-  "description": "A lightweight, flexible server framework supporting both ESM and CommonJS.",
+  "version": "1.0.4",
+  "description": "SwiftServe is a fast, lightweight, and flexible server framework that seamlessly supports both ESM and CommonJS. Perfect for building modern web applications and APIs with advanced HTTP and WebSocket features.",
   "main": "./dist/swiftServe.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/swiftServe.js"
   },
   "keywords": [
-    "server",
-    "framework",
-    "http",
-    "websockets"
+    "swiftserve",
+    "node.js framework",
+    "typescript server",
+    "http server",
+    "websockets",
+    "modern web development",
+    "lightweight framework",
+    "flexible server",
+    "ESM",
+    "CommonJS"
   ],
   "author": "TayiraCompany",
   "license": "ISC",

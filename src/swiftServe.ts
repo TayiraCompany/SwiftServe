@@ -15,7 +15,7 @@ type WebSocketHandler = (ws: WebSocket, req: http.IncomingMessage) => void;
 interface EnhancedRequest extends http.IncomingMessage {
   query: { [key: string]: string };
   body: any;
-  params: { [key: string]: string }; // دعم params
+  params: { [key: string]: string };
   isGet(): boolean;
   isPost(): boolean;
   isDelete(): boolean;
@@ -77,7 +77,100 @@ function createSwiftServe(): SwiftServe {
   let staticFolderPath: string | null = null;
 
   function use(middleware: Middleware) {
-    middlewares.push(middleware);
+    function errorHandler(
+      err: unknown,
+      req: EnhancedRequest,
+      res: EnhancedResponse,
+      next: () => void
+    ) {
+      let statusCode = 500;
+      let errorMessage = "Internal Server Error";
+
+      if (err instanceof SyntaxError) {
+        statusCode = 400;
+        errorMessage = "Bad Request: Invalid JSON";
+      } else if (err instanceof Error) {
+        if (err.message.includes("Not Found")) {
+          statusCode = 404;
+          errorMessage = "Not Found: The requested resource could not be found";
+        } else if (err.message.includes("Unauthorized")) {
+          statusCode = 401;
+          errorMessage =
+            "Unauthorized: You do not have permission to access this resource";
+        }
+      }
+
+      res.status(statusCode).send(`
+      <style>
+      body {
+        background-color: #333;
+        width: 100vw;
+        height: 100vh;
+        color: #fff;
+        font-family: 'Arial Black';
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .error-num {
+        font-size: 8em;
+      }
+      .eye {
+        background: #fff;
+        border-radius: 50%;
+        display: inline-block;
+        height: 100px;
+        position: relative;
+        width: 100px;
+      }
+      .eye::after {
+        background: #000;
+        border-radius: 50%;
+        bottom: 56.1px;
+        content: '';
+        height: 33px;
+        position: absolute;
+        right: 33px;
+        width: 33px;
+      }
+      p {
+        margin-bottom: 4em;
+      }
+      a {
+        color: #fff;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+      a:hover {
+        color: #d3d3d3;
+      }
+      </style>
+      <div>
+        <span class='error-num'>${statusCode}</span>
+        <div class='eye'></div>
+        <div class='eye'></div>
+        <p class='sub-text'>${errorMessage}</p>
+        <a href='/'>Go back</a>
+      </div>`);
+    }
+
+    function wrapMiddleware(middleware: Middleware) {
+      return (
+        req: EnhancedRequest,
+        res: EnhancedResponse,
+        next: () => void
+      ) => {
+        try {
+          middleware(req, res, next);
+        } catch (err) {
+          errorHandler(err, req, res, next);
+        }
+      };
+    }
+
+    // Wrap and add middleware
+    middlewares.push(wrapMiddleware(middleware));
   }
 
   function addRoute(
@@ -154,9 +247,8 @@ function createSwiftServe(): SwiftServe {
     };
 
     res.send = (data: string) => {
-      const decodedData = decodeURIComponent(data);
       res.setHeader("Content-Type", "text/html");
-      res.end(decodedData);
+      res.end(data);
     };
 
     res.sendFile = (filePath: string) => {
@@ -193,7 +285,7 @@ function createSwiftServe(): SwiftServe {
         value,
       ])
     );
-    req.params = {}; // تعيين params ككائن فارغ بشكل افتراضي
+    req.params = {};
     req.isGet = () => req.method === "GET";
     req.isPost = () => req.method === "POST";
     req.isDelete = () => req.method === "DELETE";
@@ -267,32 +359,43 @@ function createSwiftServe(): SwiftServe {
   function handleRequest(req: http.IncomingMessage, res: http.ServerResponse) {
     const reqType = req.method || "GET";
     const reqUrl = req.url || "/";
-    console.log(`Received request: ${reqType} ${reqUrl}`);
     const [path, queryString] = reqUrl.split("?");
-    console.log(`Matching route for method: ${reqType}, url: ${path}`);
-    const routeMatch = match(reqType, path);
 
-    if (routeMatch) {
-      const enhancedReq: EnhancedRequest = req as EnhancedRequest;
-      const enhancedRes: EnhancedResponse = res as EnhancedResponse;
+    // Create enhanced request and response objects
+    const enhancedReq: EnhancedRequest = req as EnhancedRequest;
+    const enhancedRes: EnhancedResponse = res as EnhancedResponse;
 
-      enhancedReq.query = Object.fromEntries(
-        new URLSearchParams(queryString || "").entries()
-      );
-      enhancedReq.params = routeMatch.params;
+    enhancedReq.query = Object.fromEntries(
+      new URLSearchParams(queryString || "").entries()
+    );
+    enhancedReq.params = {};
 
-      extendRequest(enhancedReq);
-      extendResponse(enhancedRes);
+    extendRequest(enhancedReq);
+    extendResponse(enhancedRes);
 
-      middlewares.forEach((middleware) =>
-        middleware(enhancedReq, enhancedRes, () => {})
-      );
-      routeMatch.handler(enhancedReq, enhancedRes);
-    } else {
-      console.log(`Route not found for: ${reqType} ${path}`);
-      res.statusCode = 404;
-      res.end("Not Found");
-    }
+    // Execute middlewares and handle errors
+    const executeMiddlewares = async (index: number) => {
+      if (index < middlewares.length) {
+        try {
+          await middlewares[index](enhancedReq, enhancedRes, () =>
+            executeMiddlewares(index + 1)
+          );
+        } catch (err: any) {
+          errorHandler(err, enhancedReq, enhancedRes, () => {});
+        }
+      } else {
+        const routeMatch = match(reqType, path);
+        if (routeMatch) {
+          enhancedReq.params = routeMatch.params;
+          routeMatch.handler(enhancedReq, enhancedRes);
+        } else {
+          console.log(`Route not found for: ${reqType} ${path}`);
+          enhancedRes.status(404).send("Not Found");
+        }
+      }
+    };
+
+    executeMiddlewares(0);
   }
 
   return {
@@ -311,3 +414,11 @@ function createSwiftServe(): SwiftServe {
 }
 
 export = createSwiftServe;
+function errorHandler(
+  err: any,
+  enhancedReq: EnhancedRequest,
+  enhancedRes: EnhancedResponse,
+  arg3: () => void
+) {
+  return new Error(`${err}`);
+}

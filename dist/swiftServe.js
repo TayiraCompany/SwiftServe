@@ -22,6 +22,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 const http = __importStar(require("http"));
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
@@ -38,7 +47,90 @@ function createSwiftServe() {
     let corsOptions = null;
     let staticFolderPath = null;
     function use(middleware) {
-        middlewares.push(middleware);
+        function errorHandler(err, req, res, next) {
+            let statusCode = 500;
+            let errorMessage = "Internal Server Error";
+            if (err instanceof SyntaxError) {
+                statusCode = 400;
+                errorMessage = "Bad Request: Invalid JSON";
+            }
+            else if (err instanceof Error) {
+                if (err.message.includes("Not Found")) {
+                    statusCode = 404;
+                    errorMessage = "Not Found: The requested resource could not be found";
+                }
+                else if (err.message.includes("Unauthorized")) {
+                    statusCode = 401;
+                    errorMessage =
+                        "Unauthorized: You do not have permission to access this resource";
+                }
+            }
+            res.status(statusCode).send(`
+      <style>
+      body {
+        background-color: #333;
+        width: 100vw;
+        height: 100vh;
+        color: #fff;
+        font-family: 'Arial Black';
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .error-num {
+        font-size: 8em;
+      }
+      .eye {
+        background: #fff;
+        border-radius: 50%;
+        display: inline-block;
+        height: 100px;
+        position: relative;
+        width: 100px;
+      }
+      .eye::after {
+        background: #000;
+        border-radius: 50%;
+        bottom: 56.1px;
+        content: '';
+        height: 33px;
+        position: absolute;
+        right: 33px;
+        width: 33px;
+      }
+      p {
+        margin-bottom: 4em;
+      }
+      a {
+        color: #fff;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+      a:hover {
+        color: #d3d3d3;
+      }
+      </style>
+      <div>
+        <span class='error-num'>${statusCode}</span>
+        <div class='eye'></div>
+        <div class='eye'></div>
+        <p class='sub-text'>${errorMessage}</p>
+        <a href='/'>Go back</a>
+      </div>`);
+        }
+        function wrapMiddleware(middleware) {
+            return (req, res, next) => {
+                try {
+                    middleware(req, res, next);
+                }
+                catch (err) {
+                    errorHandler(err, req, res, next);
+                }
+            };
+        }
+        // Wrap and add middleware
+        middlewares.push(wrapMiddleware(middleware));
     }
     function addRoute(method, routePath, handler) {
         if (routes[method]) {
@@ -92,9 +184,8 @@ function createSwiftServe() {
             res.end(JSON.stringify(data));
         };
         res.send = (data) => {
-            const decodedData = decodeURIComponent(data);
             res.setHeader("Content-Type", "text/html");
-            res.end(decodedData);
+            res.end(data);
         };
         res.sendFile = (filePath) => {
             const fullPath = path.resolve(filePath);
@@ -127,7 +218,7 @@ function createSwiftServe() {
             key,
             value,
         ]));
-        req.params = {}; // تعيين params ككائن فارغ بشكل افتراضي
+        req.params = {};
         req.isGet = () => req.method === "GET";
         req.isPost = () => req.method === "POST";
         req.isDelete = () => req.method === "DELETE";
@@ -188,25 +279,37 @@ function createSwiftServe() {
     function handleRequest(req, res) {
         const reqType = req.method || "GET";
         const reqUrl = req.url || "/";
-        console.log(`Received request: ${reqType} ${reqUrl}`);
         const [path, queryString] = reqUrl.split("?");
-        console.log(`Matching route for method: ${reqType}, url: ${path}`);
-        const routeMatch = match(reqType, path);
-        if (routeMatch) {
-            const enhancedReq = req;
-            const enhancedRes = res;
-            enhancedReq.query = Object.fromEntries(new URLSearchParams(queryString || "").entries());
-            enhancedReq.params = routeMatch.params;
-            extendRequest(enhancedReq);
-            extendResponse(enhancedRes);
-            middlewares.forEach((middleware) => middleware(enhancedReq, enhancedRes, () => { }));
-            routeMatch.handler(enhancedReq, enhancedRes);
-        }
-        else {
-            console.log(`Route not found for: ${reqType} ${path}`);
-            res.statusCode = 404;
-            res.end("Not Found");
-        }
+        // Create enhanced request and response objects
+        const enhancedReq = req;
+        const enhancedRes = res;
+        enhancedReq.query = Object.fromEntries(new URLSearchParams(queryString || "").entries());
+        enhancedReq.params = {};
+        extendRequest(enhancedReq);
+        extendResponse(enhancedRes);
+        // Execute middlewares and handle errors
+        const executeMiddlewares = (index) => __awaiter(this, void 0, void 0, function* () {
+            if (index < middlewares.length) {
+                try {
+                    yield middlewares[index](enhancedReq, enhancedRes, () => executeMiddlewares(index + 1));
+                }
+                catch (err) {
+                    errorHandler(err, enhancedReq, enhancedRes, () => { });
+                }
+            }
+            else {
+                const routeMatch = match(reqType, path);
+                if (routeMatch) {
+                    enhancedReq.params = routeMatch.params;
+                    routeMatch.handler(enhancedReq, enhancedRes);
+                }
+                else {
+                    console.log(`Route not found for: ${reqType} ${path}`);
+                    enhancedRes.status(404).send("Not Found");
+                }
+            }
+        });
+        executeMiddlewares(0);
     }
     return {
         use,
@@ -221,5 +324,8 @@ function createSwiftServe() {
         cors,
         serveStatic: () => { },
     };
+}
+function errorHandler(err, enhancedReq, enhancedRes, arg3) {
+    return new Error(`${err}`);
 }
 module.exports = createSwiftServe;
