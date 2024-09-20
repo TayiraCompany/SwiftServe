@@ -1,6 +1,6 @@
 {
   "name": "swiftserve-pkg",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "description": "SwiftServe is a fast, lightweight, and flexible server framework that seamlessly supports both ESM and CommonJS. Perfect for building modern web applications and APIs with advanced HTTP and WebSocket features.",
   "main": "./dist/swiftServe.js",
   "scripts": {
@@ -17,7 +17,19 @@
     "lightweight framework",
     "flexible server",
     "ESM",
-    "CommonJS"
+    "CommonJS",
+    "http",
+    "serve",
+    "bun",
+    "express",
+    "express-like",
+    "expressjs",
+    "express.js",
+    "swiftserve",
+    "swift",
+    "server",
+    "http-server",
+    "httpserver"
   ],
   "author": "TayiraCompany",
   "license": "ISC",
@@ -26,11 +38,13 @@
     "url": "https://github.com/TayiraCompany/SwiftServe"
   },
   "devDependencies": {
+    "@types/archiver": "^6.0.2",
     "@types/node": "^22.4.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {
     "@types/ws": "^8.5.12",
+    "archiver": "^7.0.1",
     "ws": "^8.18.0"
   }
 }

@@ -1,13 +1,14 @@
 # SwiftServe
 
-SwiftServe is a lightweight and fast framework for building web applications and APIs using 
-TypeScript and Node.js. It offers a clean and user-friendly API for developing applications 
+SwiftServe is a lightweight and fast framework for building web applications and APIs using
+TypeScript and Node.js. It offers a clean and user-friendly API for developing applications
 with advanced support for HTTP and WebSocket.
 
 # Quick Start
 
 Here's a simple example of how to use SwiftServe to create an HTTP server that serves a basic HTML page:
 page:
+
 ```
 const createSwiftServe = require("swiftserve-pkg");
 const app = createSwiftServe();
@@ -18,7 +19,7 @@ app.use(async (req, res, next) => {
 });
 
 app.get("/", (req, res) => {
-  res.send(`Hello, World!`);
+  res.send.Body(`Hello, World!`);
 });
 
 app.listen(3000, () => {
@@ -28,24 +29,25 @@ app.listen(3000, () => {
 
 # Key Features
 
-* Ease of Use: With a simple API, you can quickly start developing your applications.
+- Ease of Use: With a simple API, you can quickly start developing your applications.
 
-* WebSocket Support: Easily create WebSocket-based applications.
+- WebSocket Support: Easily create WebSocket-based applications.
 
-* Extensibility: Use Middleware to add additional functionality to your application effortlessly.
+- Extensibility: Use Middleware to add additional functionality to your application effortlessly.
 
-* Flexibility: Full support for various HTTP methods like GET, POST, PUT, DELETE, PATCH, API.
+- Flexibility: Full support for various HTTP methods like GET, POST, PUT, DELETE, PATCH, API.
 
 # Installation
 
-```npm install swiftserve-pkg```
+`npm install swiftserve-pkg`
 
 # Usage Examples
+
 ## Creating a Simple Endpoint:
 
 ```
 app.get("/welcome", (req, res) => {
-  res.send("Welcome to SwiftServe!");
+  res.send.Body("Welcome to SwiftServe!");
 });
 ```
 
@@ -61,8 +63,8 @@ app.onWebSocket((ws, req) => {
 ```
 
 ## Contributing
-We welcome contributions! If you'd like to improve SwiftServe, please open an issue or submit a pull 
-request on GitHub.
 
+We welcome contributions! If you'd like to improve SwiftServe, please open an issue or submit a pull
+request on GitHub.
 
 This version provides a clear and concise introduction to using SwiftServe, making it easy for developers to get started. You can further customize this README to suit your project's specific needs.
